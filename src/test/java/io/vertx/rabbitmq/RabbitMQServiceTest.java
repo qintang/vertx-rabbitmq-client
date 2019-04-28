@@ -62,7 +62,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     });
 
     client.basicConsume(queueName, address, onSuccess(v -> {
-    }));
+    }),null);
 
 
     assertWaitUntil(() -> receivedOrder.size() == sendingOrder.size());
@@ -186,7 +186,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     });
 
     client.basicConsume(q, "my.address", onSuccess(v -> {
-    }));
+    }),null);
 
     awaitLatch(latch);
     testComplete();
@@ -204,7 +204,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
-    client.basicConsume(q, "my.address", true, onSuccess(v -> {}), errorHandler);
+    client.basicConsume(q, "my.address", true, onSuccess(v -> {}), errorHandler,null);
 
     awaitLatch(latch);
     testComplete();
@@ -241,7 +241,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     });
 
     client.basicConsume(q, "my.address", false, onSuccess(v -> {
-    }));
+    }),null);
 
     awaitLatch(latch);
     //assert all messages should be consumed.

@@ -69,21 +69,21 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    */
-  void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
+  void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler,Handler<AsyncResult<JsonObject>> resultParseErrorHandler);
 
   /**
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler,Handler<AsyncResult<JsonObject>> resultParseErrorHandler);
 
   /**
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag and error handler
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler);
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler,Handler<AsyncResult<JsonObject>> resultParseErrorHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
@@ -238,6 +238,14 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#queueBind(String, String, String)
    */
   void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Bind a queue to an exchange
+   *
+   * @see com.rabbitmq.client.Channel#queueBind(String, String, String)
+   */
+  void queueBind(String queue, String exchange, String routingKey,JsonObject config, Handler<AsyncResult<Void>> resultHandler);
+
 
   /**
    * Returns the number of messages in a queue ready to be delivered.

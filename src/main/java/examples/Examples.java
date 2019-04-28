@@ -88,7 +88,7 @@ public class Examples {
       } else {
         consumeResult.cause().printStackTrace();
       }
-    });
+    },null);
   }
 
   public void getMessage(RabbitMQClient client) {
@@ -136,7 +136,7 @@ public class Examples {
       } else {
         consumeResult.cause().printStackTrace();
       }
-    });
+    },null);
   }
 
   //pass the additional config for the queue as JSON, check RabbitMQ documentation for specific config parameters

@@ -83,9 +83,8 @@ class Utils {
     if (map == null) {
       return map;
     }
-
     return map.entrySet().stream().collect( Collectors.toMap(
-      Map.Entry::getKey, e -> Utils.convertLongStringToString( e.getValue() ) ) );
+      Map.Entry::getKey, e -> null==e?null:Utils.convertLongStringToString( e.getValue() ) ) );
 
   }
 
