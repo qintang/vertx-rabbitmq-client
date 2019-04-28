@@ -69,7 +69,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
       async.countDown();
     });
 
-    client.basicConsume(queueName, address, ctx.asyncAssertSuccess());
+    client.basicConsume(queueName, address, ctx.asyncAssertSuccess(),null);
 
     async.awaitSuccess(15000);
 
@@ -230,7 +230,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     });
 
     client.basicConsume(q, "my.address", ctx.asyncAssertSuccess(v -> {
-    }));
+    }),null);
   }
 
 
@@ -259,7 +259,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
       String body = randomAlphaString(100);
       JsonObject message = new JsonObject().put("body", body);
       client.basicPublish("", q, message, null);
-    }));
+    }),null);
   }
 
   @Test
@@ -293,7 +293,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
-    client.basicConsume(q, "my.address", true, ctx.asyncAssertSuccess(), errorHandler);
+    client.basicConsume(q, "my.address", true, ctx.asyncAssertSuccess(), errorHandler,null);
   }
 
   @Test
@@ -329,7 +329,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     });
 
     client.basicConsume(q, "my.address", false, ctx.asyncAssertSuccess(v -> {
-    }));
+    }),null);
 
     //assert all messages should be consumed.
     latch.awaitSuccess(15000);
@@ -506,7 +506,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
       receivedExpectedNumberOfMessages.countDown();
     });
 
-    client.basicConsume(queue, address, false, ctx.asyncAssertSuccess());
+    client.basicConsume(queue, address, false, ctx.asyncAssertSuccess(),null);
 
     receivedExpectedNumberOfMessages.awaitSuccess(15000);
 

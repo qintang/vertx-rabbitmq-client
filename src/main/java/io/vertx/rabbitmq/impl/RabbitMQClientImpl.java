@@ -35,11 +35,21 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private Connection connection;
   private Channel channel;
   private boolean channelConfirms = false;
+  /**
+   * 新建时堆栈信息，用于调试错误显示
+   */
+  private final String stackTraceElements;
 
   public RabbitMQClientImpl(Vertx vertx, RabbitMQOptions config) {
     this.vertx = vertx;
     this.config = config;
     this.retries = config.getConnectionRetries();
+
+    StringBuffer stringBuffer=new StringBuffer();
+    for (StackTraceElement stackTraceElement:Thread.currentThread().getStackTrace()) {
+      stringBuffer.append("    ").append(stackTraceElement.toString()).append("\n");
+    }
+    this.stackTraceElements=stringBuffer.toString();
     //TODO: includeProperties isn't really intuitive
     //TODO: Think about allowing this at a method level ?
     this.includeProperties = config.getIncludeProperties();
@@ -133,17 +143,17 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler) {
-    basicConsume(queue, address, true, resultHandler);
+  public void basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler,Handler<AsyncResult<JsonObject>> resultParseErrorHandler) {
+    basicConsume(queue, address, true, resultHandler,resultParseErrorHandler);
   }
 
   @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler) {
-    basicConsume(queue, address, autoAck, resultHandler, null);
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler,Handler<AsyncResult<JsonObject>> resultParseErrorHandler) {
+    basicConsume(queue, address, autoAck, resultHandler, null,resultParseErrorHandler);
   }
 
   @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler, Handler<Throwable> errorHandler) {
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler, Handler<Throwable> errorHandler,Handler<AsyncResult<JsonObject>> resultParseErrorHandler) {
     forChannel(resultHandler, channel ->
       channel.basicConsume(queue, autoAck, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
         if (ar.succeeded()) {
@@ -153,6 +163,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
           if (errorHandler != null) {
             errorHandler.handle(ar.cause());
           }
+        }
+      },ar ->{
+        if (resultParseErrorHandler != null) {
+          resultParseErrorHandler.handle(ar);
         }
       })));
   }
@@ -365,8 +379,17 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
+    queueBind(queue,exchange,routingKey,null,resultHandler);
+  }
+
+  @Override
+  public void queueBind(String queue, String exchange, String routingKey, JsonObject config, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      channel.queueBind(queue, exchange, routingKey);
+      if (config==null){
+        channel.queueBind(queue, exchange, routingKey);
+      }else {
+        channel.queueBind(queue, exchange, routingKey,new LinkedHashMap<>(config.getMap()));
+      }
       return null;
     });
   }
@@ -378,7 +401,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void start(Handler<AsyncResult<Void>> resultHandler) {
-    log.info("Starting rabbitmq client");
+    log.info("Starting rabbitmq client "+this.config.getUri());
     start(0, resultHandler);
   }
 
@@ -388,7 +411,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         connect();
         future.complete();
       } catch (IOException | TimeoutException e) {
-        log.error("Could not connect to rabbitmq", e);
+        log.error("Could not connect to rabbitmq "+this.config.getUri(), e);
+        if (this.config.getUri()==null){
+          log.error("stackTraceElements:{}",stackTraceElements);
+        }
         future.fail(e);
       }
     }, ar -> {

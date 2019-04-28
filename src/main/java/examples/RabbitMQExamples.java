@@ -102,7 +102,7 @@ public class RabbitMQExamples {
       } else {
         consumeResult.cause().printStackTrace();
       }
-    });
+    },null);
   }
 
   public void basicConsumer(Vertx vertx, RabbitMQClient client) {
@@ -212,7 +212,7 @@ public class RabbitMQExamples {
       } else {
         consumeResult.cause().printStackTrace();
       }
-    });
+    },null);
   }
 
   //pass the additional config for the queue as JSON, check RabbitMQ documentation for specific config parameters

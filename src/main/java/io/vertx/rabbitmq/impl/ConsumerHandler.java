@@ -24,17 +24,19 @@ class ConsumerHandler extends DefaultConsumer {
 
   private final Vertx vertx;
   private final Handler<AsyncResult<JsonObject>> handler;
+  private final  Handler<AsyncResult<JsonObject>> errorHandler;
   private final boolean includeProperties;
   private final Context handlerContext;
 
   private static final Logger log = LoggerFactory.getLogger(ConsumerHandler.class);
 
-  public ConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, Handler<AsyncResult<JsonObject>> handler) {
+  public ConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, Handler<AsyncResult<JsonObject>> handler, Handler<AsyncResult<JsonObject>> errorHandler) {
     super(channel);
     this.handlerContext = vertx.getOrCreateContext();
     this.vertx = vertx;
     this.includeProperties = includeProperties;
     this.handler = handler;
+    this.errorHandler = errorHandler;
   }
 
   // TODO: Think about implementing all Consume methods and deliver that back to the handler ?
@@ -61,7 +63,11 @@ class ConsumerHandler extends DefaultConsumer {
       this.handlerContext.runOnContext(v -> handler.handle(Future.succeededFuture(msg)));
 
     } catch (Exception e) {
+      msg.put("body", decode(properties.getContentEncoding(), body));
+      msg.put("deliveryTag", envelope.getDeliveryTag());
+
       this.handlerContext.runOnContext(v -> handler.handle(Future.failedFuture(e)));
+      this.handlerContext.runOnContext(v -> errorHandler.handle(Future.succeededFuture(msg)));
     }
   }
 
